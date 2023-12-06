@@ -396,7 +396,7 @@ function Fcoeffs(f_vec,M,N,P,L)
 end
 
 #performs Hill's Method
-function HillMethod(operator,L,N,D,P,op_dim)
+function HillMethod(operator,L,N,D,P,op_dim,plot_disp)
     
     if op_dim == 1
         operator = reverse(operator);
@@ -430,6 +430,7 @@ function HillMethod(operator,L,N,D,P,op_dim)
         #initialize arrays for the eigenvalues and eigenvectors
         evals_arr = []
         evecs_arr = []
+        μ_arr = []
 
         #loop through Floquet parameters
         for val = 1:D
@@ -455,14 +456,21 @@ function HillMethod(operator,L,N,D,P,op_dim)
             push!(evals_arr,evals)
             evecs = data.vectors
             push!(evecs_arr,evecs)
+            
+            #put corresponding Floquet values in an array
+            for i=1:length(evals)
+                push!(μ_arr,μ)
+            end
         end
 
         evals_arr = vcat(evals_arr...)
-
-        #plot spectrum
-        display(plot(scatter(x=real(evals_arr),y=imag(evals_arr),mode="markers"),Layout(title="Spectrum")))
         
-        return(evals_arr,evecs_arr)
+        if plot_disp == true
+            #plot spectrum
+            display(plot(scatter(x=real(evals_arr),y=imag(evals_arr),mode="markers"),Layout(title="Spectrum")))
+        end
+        
+        return(evals_arr,evecs_arr,μ_arr)
 
     else
         M = (size(operator)[2]/op_dim) - 1; #order of linear operator
@@ -490,9 +498,10 @@ function HillMethod(operator,L,N,D,P,op_dim)
         μ_max = π/(2*L);
         μ_step = (μ_max-μ_min)/D;
 
-        #initialize arrays for the eigenvalues and eigenvectors
+        #initialize arrays for the eigenvalues, eigenvectors, and Floquet values
         evals_arr = []
         evecs_arr = []
+        μ_arr = []
 
         #construct truncated bi-infinite matrix and compute evals/evecs
         for val = 1:D #loop through Floquet parameters
@@ -541,21 +550,28 @@ function HillMethod(operator,L,N,D,P,op_dim)
             push!(evals_arr,evals)
             evecs = data.vectors
             push!(evecs_arr,evecs)
+            
+            #put corresponding Floquet values in an array
+            for i=1:length(evals)
+                push!(μ_arr,μ)
+            end
         end
 
         evals_arr = vcat(evals_arr...)
+        
+        if plot_disp == true
+            #plot the spectrum
+            display(plot(scatter(x=real(evals_arr),y=imag(evals_arr),mode="markers"),Layout(title="Spectrum")))
+        end
 
-        #plot the spectrum
-        display(plot(scatter(x=real(evals_arr),y=imag(evals_arr),mode="markers"),Layout(title="Spectrum")))
-
-        return(evals_arr,evecs_arr)
+        return(evals_arr,evecs_arr,μ_arr)
         end
     
 end
 
 #This function basically does exactly that of the HillMethod code but does this simultaneously on the two operators
 # in the generalized EVP. It then computes the generalized evals and evecs using eigen(op1,op2)
-function HillMethodGen(operator1,operator2,L,N,D,P,op_dim)
+function HillMethodGen(operator1,operator2,L,N,D,P,op_dim,plot_disp)
     
     if op_dim == 1
         operator1 = reverse(operator1);
@@ -606,6 +622,7 @@ function HillMethodGen(operator1,operator2,L,N,D,P,op_dim)
         #initialize arrays for the eigenvalues and eigenvectors
         evals_arr = []
         evecs_arr = []
+        μ_arr = []
 
         #loop through Floquet parameters
         for val = 1:D
@@ -639,14 +656,21 @@ function HillMethodGen(operator1,operator2,L,N,D,P,op_dim)
             push!(evals_arr,evals)
             evecs = data.vectors
             push!(evecs_arr,evecs)
+            
+            #put corresponding Floquet values in an array
+            for i=1:length(evals)
+                push!(μ_arr,μ)
+            end
         end
 
         evals_arr = vcat(evals_arr...)
-
-        #plot spectrum
-        display(plot(scatter(x=real(evals_arr),y=imag(evals_arr),mode="markers"),Layout(title="Spectrum")))
         
-        return(evals_arr,evecs_arr)
+        if plot_disp == true
+            #plot spectrum
+            display(plot(scatter(x=real(evals_arr),y=imag(evals_arr),mode="markers"),Layout(title="Spectrum")))
+        end
+        
+        return(evals_arr,evecs_arr,μ_arr)
 
     else
         M1 = (size(operator1)[2]/op_dim) - 1; #order of linear operator
@@ -686,6 +710,7 @@ function HillMethodGen(operator1,operator2,L,N,D,P,op_dim)
         #initialize arrays for the eigenvalues and eigenvectors
         evals_arr = []
         evecs_arr = []
+        μ_arr = []
 
         #construct truncated bi-infinite matrix and compute evals/evecs
         for val = 1:D #loop through Floquet parameters
@@ -754,31 +779,45 @@ function HillMethodGen(operator1,operator2,L,N,D,P,op_dim)
             push!(evals_arr,evals)
             evecs = data.vectors
             push!(evecs_arr,evecs)
+            
+            #put corresponding Floquet values in an array
+            for i=1:length(evals)
+                push!(μ_arr,μ)
+            end
         end
 
         evals_arr = vcat(evals_arr...)
+        
+        if plot_disp == true
+            #plot the spectrum
+            display(plot(scatter(x=real(evals_arr),y=imag(evals_arr),mode="markers"),Layout(title="Spectrum")))
+        end
 
-        #plot the spectrum
-        display(plot(scatter(x=real(evals_arr),y=imag(evals_arr),mode="markers"),Layout(title="Spectrum")))
-
-        return(evals_arr,evecs_arr)
+        return(evals_arr,evecs_arr,μ_arr)
         end
     
 end
 
-#takes in user input operator(s) and corresponding info and returns evals and evecs with interactive plot
-function FFHM(scalar_period,scalar_num_FourierModes,scalar_num_FloqVals,P,scalar_op_dim,op_print,input_op1,input_op2=0)
+function FFHM(scalar_period,scalar_num_FourierModes,scalar_num_FloqVals,P,scalar_op_dim,plot_disp,op_print,input_op1,params=0,input_op2=0)
+    if params != 0
+        pkeys = keys(params)
+        for j=1:length(params)
+            pk = pkeys[j]
+            pf = params[j]
+            @eval($pk=$pf)
+        end
+    end
     if input_op2 == 0 #if there is only one operator
         new_op = operator_transform(input_op1,op_print); #transform user input operator to one Hill's method code can read
         #call Hill's method code
-        (evals_arr,evecs_arr) = Base.invokelatest(HillMethod,new_op,scalar_period,scalar_num_FourierModes,scalar_num_FloqVals,P,scalar_op_dim)
-        return (evals_arr,evecs_arr)
+        (evals_arr,evecs_arr,μ_arr) = Base.invokelatest(HillMethod,new_op,scalar_period,scalar_num_FourierModes,scalar_num_FloqVals,P,scalar_op_dim,plot_disp)
+        return (evals_arr,evecs_arr,μ_arr)
     else #generalized EVP (two operators)
         new_op1 = operator_transform(input_op1,op_print); #transform user input operator to one Hill's method code can read
         new_op2 = operator_transform(input_op2,op_print); #transform user input operator to one Hill's method code can read
         #call Hill's method code
-        (evals_arr,evecs_arr) = Base.invokelatest(HillMethodGen,new_op1,new_op2,scalar_period,scalar_num_FourierModes,scalar_num_FloqVals,P,scalar_op_dim)
-        return (evals_arr,evecs_arr)
+        (evals_arr,evecs_arr,μ_arr) = Base.invokelatest(HillMethodGen,new_op1,new_op2,scalar_period,scalar_num_FourierModes,scalar_num_FloqVals,P,scalar_op_dim,plot_disp)
+        return (evals_arr,evecs_arr,μ_arr)
     end
 end
 
